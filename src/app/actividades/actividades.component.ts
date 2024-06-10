@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActivityService } from '../activity.service';
 
 interface Activity {
   description: string;
@@ -18,33 +19,35 @@ export class ActividadesComponent implements OnInit {
   time: number = 0;
   activities: Activity[] = [];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private activityService: ActivityService) {}
 
   ngOnInit() {
-    const currentUser = localStorage.getItem('currentUser');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')!);
     if (currentUser) {
-      const user = JSON.parse(localStorage.getItem(currentUser)!);
-      this.activities = user.activities || [];
+      this.activityService.getActivities(currentUser.username).subscribe(
+        response => {
+          if (response.success) {
+            this.activities = response.activities;
+          }
+        }
+      );
     } else {
       this.router.navigate(['/login']);
     }
   }
 
   onAddActivity() {
-    const currentUser = localStorage.getItem('currentUser');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')!);
     if (currentUser) {
-      const user = JSON.parse(localStorage.getItem(currentUser)!);
-      const newActivity: Activity = {
-        description: this.description,
-        time: this.time,
-        timestamp: new Date(),
-        username: user.username // Añadimos el nombre de usuario
-      };
-      user.activities.push(newActivity);
-      localStorage.setItem(currentUser, JSON.stringify(user));
-      this.activities = user.activities;
-      this.description = '';
-      this.time = 0;
+      this.activityService.addActivity(currentUser.username, this.description, this.time).subscribe(
+        response => {
+          if (response.success) {
+            this.activities.push(response.activity);
+            this.description = '';
+            this.time = 0;
+          }
+        }
+      );
     }
   }
 

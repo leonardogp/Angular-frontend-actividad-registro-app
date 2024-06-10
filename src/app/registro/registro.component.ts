@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { ActivityService } from '../activity.service';
 
 @Component({
   selector: 'app-registro',
@@ -10,16 +11,21 @@ export class RegistroComponent {
   username: string = '';
   password: string = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private activityService: ActivityService) {}
 
   onRegister() {
-    if (localStorage.getItem(this.username)) {
-      alert('Usuario ya existe');
-    } else {
-      const user = { password: this.password, activities: [] };
-      localStorage.setItem(this.username, JSON.stringify(user));
-      alert('Registro exitoso');
-      this.router.navigate(['/login']);
-    }
+    this.activityService.register(this.username, this.password).subscribe(
+      response => {
+        if (response.success) {
+          alert('Registration successful. Please login.');
+          this.router.navigate(['/login']);
+        } else {
+          alert(response.message);
+        }
+      },
+      error => {
+        alert('Registration failed');
+      }
+    );
   }
 }
